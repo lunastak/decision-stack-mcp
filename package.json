@@ -1,0 +1,35 @@
+{
+  "name": "decision-stack",
+  "version": "1.0.2",
+  "description": "MCP server for building your Decision Stack — structured strategic thinking using the framework by Martin Eriksson and Jonny Schneider",
+  "type": "module",
+  "bin": {
+    "decision-stack": "dist/index.js"
+  },
+  "scripts": {
+    "prebuild": "tsx scripts/build-instructions.ts",
+    "build": "npm run prebuild && tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "decision-stack",
+    "strategy",
+    "lunastak"
+  ],
+  "author": "Jonny Schneider <jonny@humventures.com.au>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lunastak/decision-stack-mcp.git"
+  },
+  "homepage": "https://lunastak.io"
+}
