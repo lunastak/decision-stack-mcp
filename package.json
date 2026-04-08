@@ -1,6 +1,6 @@
 {
   "name": "decision-stack",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "MCP server for building your Decision Stack — structured strategic thinking using the framework by Martin Eriksson and Jonny Schneider",
   "type": "module",
   "bin": {
