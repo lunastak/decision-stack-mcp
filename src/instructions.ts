@@ -1,4 +1,4 @@
-// Auto-generated from lunastak/decision-stack SKILL.md (ref: main) — do not edit directly
+// Auto-generated from lunastak/tools SKILL.md (ref: main) — do not edit directly
 export const INSTRUCTIONS = `# Decision Stack
 
 Guided preparation of strategic context using the Decision Stack framework (thedecisionstack.com) by Martin Eriksson and Jonny Schneider.

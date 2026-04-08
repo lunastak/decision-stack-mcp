@@ -1,4 +1,4 @@
-// Fetches SKILL.md from lunastak/decision-stack, strips YAML frontmatter,
+// Fetches SKILL.md from lunastak/tools, strips YAML frontmatter,
 // and writes the body to src/instructions.ts as an exported template literal.
 //
 // Pin to a different ref by setting DECISION_STACK_REF (e.g. a tag or commit SHA).
@@ -12,7 +12,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const outputPath = resolve(__dirname, "../src/instructions.ts");
 
 const ref = process.env.DECISION_STACK_REF ?? "main";
-const url = `https://raw.githubusercontent.com/lunastak/decision-stack/${ref}/SKILL.md`;
+const url = `https://raw.githubusercontent.com/lunastak/tools/${ref}/SKILL.md`;
 
 console.log(`Fetching ${url}`);
 const res = await fetch(url);
@@ -31,7 +31,7 @@ const escaped = body
   .replace(/`/g, "\\`")
   .replace(/\$\{/g, "\\${");
 
-const output = `// Auto-generated from lunastak/decision-stack SKILL.md (ref: ${ref}) — do not edit directly\nexport const INSTRUCTIONS = \`${escaped}\`;\n`;
+const output = `// Auto-generated from lunastak/tools SKILL.md (ref: ${ref}) — do not edit directly\nexport const INSTRUCTIONS = \`${escaped}\`;\n`;
 
 writeFileSync(outputPath, output);
 console.log(`Built instructions.ts (${body.length} chars from ref ${ref})`);
