@@ -1,23 +1,29 @@
 {
   "name": "decision-stack",
-  "version": "1.0.2",
-  "description": "MCP server for building your Decision Stack — structured strategic thinking using the framework by Martin Eriksson and Jonny Schneider",
+  "version": "2.0.0-poc.0",
+  "private": true,
+  "description": "MCP client of Lunastak's /api/v1 — read, edit and feed a Decision Stack from Claude Code",
   "type": "module",
   "bin": {
     "decision-stack": "dist/index.js"
   },
   "scripts": {
-    "prebuild": "tsx scripts/build-instructions.ts",
-    "build": "npm run prebuild && tsc",
-    "prepublishOnly": "npm run build"
+    "build": "tsc",
+    "test": "vitest run",
+    "smoke": "tsx scripts/smoke.ts"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0"
+    "@modelcontextprotocol/sdk": "^1.28.0",
+    "zod": "^3.25.0"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
     "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "~4.0.18"
   },
   "keywords": [
     "mcp",
