@@ -32,15 +32,6 @@ describe('createClient', () => {
     expect(JSON.parse(init?.body as string)).toEqual({ summary: 's', operations: [] })
   })
 
-  it('passes the import mode as a query parameter', async () => {
-    const fetchImpl = fakeFetch(200, {})
-    const client = createClient({ baseUrl: 'https://x', apiKey: 'k', fetchImpl })
-
-    await client.importContext('p1', { version: '1.0' }, 'direct')
-
-    expect(fetchImpl.mock.calls[0][0]).toBe('https://x/api/v1/projects/p1/bundles?mode=direct')
-  })
-
   it('adds the Vercel bypass header only when configured', async () => {
     const without = fakeFetch(200, {})
     await createClient({ baseUrl: 'https://x', apiKey: 'k', fetchImpl: without }).listProjects()

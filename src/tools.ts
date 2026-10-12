@@ -1,12 +1,17 @@
 /**
- * The four tools. Each is a thin call through the /api/v1 client; the descriptions are the agent's
+ * The three tools. Each is a thin call through the /api/v1 client; the descriptions are the agent's
  * instructions, so they carry the rules (read first, batch edits, write a summary).
+ *
+ * No import tool. Bundles write ground truths directly, but ground truths are pipeline output, not
+ * something an agent should author, and a bundle has no source text behind it. Import comes back
+ * redesigned, probably as a thin wrapper with auth and project selection or creation.
+ * (Jonny, 15-74, 2026-10-12)
  */
 import { z } from 'zod'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import { LunastakApiError, type Client } from './client.js'
-import { Bundle, Operation } from './schema.js'
+import { Operation } from './schema.js'
 
 const projectId = z.string().min(1).describe('From list_projects')
 
@@ -35,14 +40,6 @@ async function run(fn: () => Promise<unknown>): Promise<CallToolResult> {
   }
 }
 
-/**
- * The app accepts `<channel>@x.y.z` only — a prerelease suffix would make it store the whole claim
- * as `unknown` — so the bundle carries the core version (2.0.0-poc.0 → 2.0.0). (15-74, 2026-10-12)
- */
-export function generatedBy(version: string): string {
-  return `lunastak-mcp@${version.split(/[-+]/)[0]}`
-}
-
 const EDIT_STACK = `Edit the user's Decision Stack as one changeset.
 
 Rules:
@@ -62,7 +59,7 @@ Editable fields per card type:
 - opportunity: title, description, objectiveIds[], successMetrics[] ({ belief: { action, outcome }, signal, baseline, target, objectiveId? }), status: draft | active | complete (add requires title + description)
 - principle: priority, deprioritized ("even over" — what it is chosen over), context (add requires priority + deprioritized)`
 
-export function registerTools(server: McpServer, api: Client, { version }: { version: string }) {
+export function registerTools(server: McpServer, api: Client) {
   server.registerTool('list_projects', {
     title: 'List Lunastak projects',
     description: "The user's Lunastak projects (id, name, hasStack, updatedAt). Call this first to get a projectId.",
@@ -84,15 +81,4 @@ export function registerTools(server: McpServer, api: Client, { version }: { ver
       operations: z.array(Operation).min(1).max(50),
     },
   }, ({ projectId, summary, operations }) => run(() => api.editStack(projectId, { summary, operations })))
-
-  server.registerTool('import_context', {
-    title: 'Import a context bundle',
-    description: `Send a context bundle (the JSON format from the decision-stack skill) into a project as ground truths. generatedBy is set to ${generatedBy(version)} if the bundle doesn't carry one. The user reviews the ground truths in Lunastak; nothing regenerates automatically — to refresh the stack they press refresh in the app. mode: "direct" maps themes straight to areas; "transform" runs Lunastak's tagging pass (one LLM call); omit it and Lunastak picks (chunks → transform).`,
-    inputSchema: {
-      projectId,
-      bundle: Bundle,
-      mode: z.enum(['transform', 'direct']).optional(),
-    },
-  }, ({ projectId, bundle, mode }) =>
-    run(() => api.importContext(projectId, { ...bundle, generatedBy: bundle.generatedBy ?? generatedBy(version) }, mode)))
 }

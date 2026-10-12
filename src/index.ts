@@ -17,6 +17,6 @@ try {
 }
 
 const server = new McpServer({ name: 'lunastak', version: VERSION })
-registerTools(server, createClient(config), { version: VERSION })
+registerTools(server, createClient(config))
 await server.connect(new StdioServerTransport())
 console.error(`lunastak MCP ${VERSION} → ${config.baseUrl}`)

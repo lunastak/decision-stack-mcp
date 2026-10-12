@@ -18,8 +18,6 @@ export interface ClientConfig {
   fetchImpl?: typeof fetch
 }
 
-export type ImportMode = 'transform' | 'direct'
-
 export function createClient({ baseUrl, apiKey, vercelBypass, fetchImpl = fetch }: ClientConfig) {
   const root = `${baseUrl.replace(/\/+$/, '')}/api/v1`
 
@@ -39,8 +37,6 @@ export function createClient({ baseUrl, apiKey, vercelBypass, fetchImpl = fetch 
     listProjects: () => call<{ projects: unknown[] }>('GET', '/projects'),
     getStack: (projectId: string) => call<unknown>('GET', `${p(projectId)}/stack`),
     editStack: (projectId: string, changes: unknown) => call<unknown>('POST', `${p(projectId)}/stack/changes`, changes),
-    importContext: (projectId: string, bundle: unknown, mode?: ImportMode) =>
-      call<unknown>('POST', `${p(projectId)}/bundles${mode ? `?mode=${mode}` : ''}`, bundle),
   }
 }
 

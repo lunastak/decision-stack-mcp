@@ -6,9 +6,6 @@
  * ARCHITECTURE.md — "MCP schemas are hand-copied from the app's v1 schemas"; revisit if v1 changes
  * more than once (publish the schemas as a package, or generate both from an OpenAPI spec).
  * (15-74, 2026-10-12)
- *
- * The bundle schema is deliberately loose: the app is the validator. It only gives the agent the
- * shape from lunastak/tools docs/bundle-format.md.
  */
 import { z } from 'zod'
 
@@ -69,36 +66,3 @@ export const StackChangesBody = z.object({
   summary: z.string().trim().min(1).max(300),
   operations: z.array(Operation).min(1).max(50),
 }).strict()
-
-// --- Context bundle (lunastak/tools docs/bundle-format.md) ---
-
-const AREAS = [
-  'CUSTOMER_MARKET', 'PROBLEM_OPPORTUNITY', 'VALUE_PROPOSITION', 'COMPETITIVE_LANDSCAPE',
-  'BUSINESS_MODEL_ECONOMICS', 'GO_TO_MARKET', 'PRODUCT_EXPERIENCE', 'CAPABILITIES_ASSETS',
-  'RISKS_CONSTRAINTS', 'STRATEGIC_INTENT',
-] as const
-
-const theme = z.object({
-  area: z.enum(AREAS),
-  theme: z.string().describe('Short theme title'),
-  evidence: z.array(z.string()).describe('Spans copied VERBATIM from the source, character for character. Prefer the user\'s own words.'),
-  confidence: z.enum(['HIGH', 'MEDIUM', 'LOW']),
-}).passthrough()
-
-const chunk = z.object({
-  topic: z.string().describe('Short descriptive title'),
-  content: z.string().describe('Full explanation of this strategic theme, with evidence and context'),
-  sources: z.array(z.string()).optional(),
-  evidence: z.array(z.string()).optional().describe('Spans copied VERBATIM from the source'),
-}).passthrough()
-
-export const Bundle = z.object({
-  version: z.string().describe('Schema version. Current: "1.0"'),
-  framework: z.literal('decision-stack'),
-  generatedBy: z.string().optional().describe('<channel>@<version>. Filled with lunastak-mcp@<version> if missing'),
-  preparedAt: z.string().optional().describe('ISO 8601'),
-  themes: z.array(theme).optional().describe('Themes tagged by strategic area. Use this OR chunks'),
-  chunks: z.array(chunk).optional().describe('Untagged content blocks, when areas are ambiguous; Lunastak tags them at import'),
-}).passthrough()
-  .refine(b => (b.themes?.length ?? 0) > 0 || (b.chunks?.length ?? 0) > 0, 'a bundle needs non-empty themes or chunks')
-export type Bundle = z.infer<typeof Bundle>

@@ -10,7 +10,6 @@ function fakeApi() {
     listProjects: vi.fn(async () => ({ projects: [{ id: 'p1', name: 'Humventures', hasStack: true }] })),
     getStack: vi.fn(async () => ({ project: { id: 'p1' } })),
     editStack: vi.fn(async () => ({ applied: 1, snapshotVersion: 7 })),
-    importContext: vi.fn(async () => ({ imported: 3 })),
   } satisfies Record<keyof Client, unknown>
 }
 
@@ -20,7 +19,7 @@ let mcp: McpClient
 beforeEach(async () => {
   api = fakeApi()
   const server = new McpServer({ name: 'lunastak', version: '2.0.0-poc.0' })
-  registerTools(server, api as unknown as Client, { version: '2.0.0-poc.0' })
+  registerTools(server, api as unknown as Client)
   const [serverSide, clientSide] = InMemoryTransport.createLinkedPair()
   mcp = new McpClient({ name: 'test', version: '0' })
   await Promise.all([server.connect(serverSide), mcp.connect(clientSide)])
@@ -29,16 +28,10 @@ beforeEach(async () => {
 const text = (r: Awaited<ReturnType<McpClient['callTool']>>) =>
   (r.content as { type: string; text: string }[])[0].text
 
-const bundle = {
-  version: '1.0',
-  framework: 'decision-stack',
-  chunks: [{ topic: 'Who buys', content: 'Mid-market ops leads.' }],
-}
-
 describe('tools', () => {
-  it('registers the four tools', async () => {
+  it('registers the three tools, and no import', async () => {
     const { tools } = await mcp.listTools()
-    expect(tools.map(t => t.name).sort()).toEqual(['edit_stack', 'get_stack', 'import_context', 'list_projects'])
+    expect(tools.map(t => t.name).sort()).toEqual(['edit_stack', 'get_stack', 'list_projects'])
   })
 
   it('list_projects calls listProjects and returns its JSON', async () => {
@@ -69,28 +62,6 @@ describe('tools', () => {
     })
     expect(r.isError).toBe(true)
     expect(api.editStack).not.toHaveBeenCalled()
-  })
-
-  it('import_context fills generatedBy with the core version, and passes mode', async () => {
-    await mcp.callTool({ name: 'import_context', arguments: { projectId: 'p1', bundle, mode: 'transform' } })
-    expect(api.importContext).toHaveBeenCalledWith('p1', { ...bundle, generatedBy: 'lunastak-mcp@2.0.0' }, 'transform')
-  })
-
-  it('import_context keeps a generatedBy the bundle already carries', async () => {
-    await mcp.callTool({ name: 'import_context', arguments: { projectId: 'p1', bundle: { ...bundle, generatedBy: 'lunastak-skill@1.3.0' } } })
-    expect(api.importContext).toHaveBeenCalledWith('p1', { ...bundle, generatedBy: 'lunastak-skill@1.3.0' }, undefined)
-  })
-
-  it('import_context passes the rest of the bundle through untouched', async () => {
-    const full = {
-      ...bundle,
-      generatedBy: 'lunastak-skill@1.3.0',
-      rawSummary: 'Everything captured.',
-      openQuestions: [{ area: 'GO_TO_MARKET', question: 'Which channel?', why: 'Undefined.' }],
-      coverage: { CUSTOMER_MARKET: { level: 'rich', sourceCount: 3 } },
-    }
-    await mcp.callTool({ name: 'import_context', arguments: { projectId: 'p1', bundle: full } })
-    expect(api.importContext).toHaveBeenCalledWith('p1', full, undefined)
   })
 
   it('a conflict becomes isError with the get_stack hint', async () => {

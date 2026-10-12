@@ -4,21 +4,18 @@
  *
  *   npm run smoke                     list, read the first project with a stack, no-op edit
  *   npm run smoke -- <projectId>      the same against that project
- *   npm run smoke -- <projectId> --import   also import a one-chunk bundle (writes a ground truth)
  *
  * The edit sets the vision to itself, so it only adds a version-list entry
- * ("smoke test: no-op edit"). The import is opt-in because it isn't harmless. (15-74, 2026-10-12)
+ * ("smoke test: no-op edit"). (15-74, 2026-10-12)
  */
 import { createClient, LunastakApiError } from '../src/client.js'
 import { loadConfig, VERSION } from '../src/config.js'
-import { generatedBy } from '../src/tools.js'
 
 type Project = { id: string; name: string; hasStack: boolean }
 type Stack = { vision: { text: string; updatedAt: string } }
 
 const args = process.argv.slice(2)
-const doImport = args.includes('--import')
-const projectArg = args.find(a => !a.startsWith('--'))
+const projectArg = args[0]
 
 const config = loadConfig()
 const api = createClient(config)
@@ -41,17 +38,6 @@ try {
     operations: [{ op: 'set_statement', field: 'vision', text: stack.vision.text, expectedUpdatedAt: stack.vision.updatedAt }],
   }))
 
-  if (doImport) {
-    show('import_context', await api.importContext(project.id, {
-      version: '1.0',
-      framework: 'decision-stack',
-      generatedBy: generatedBy(VERSION),
-      preparedAt: new Date().toISOString(),
-      chunks: [{ topic: 'Smoke test', content: 'A one-chunk bundle posted by the decision-stack MCP smoke script.' }],
-    }))
-  } else {
-    console.log('\n== import_context skipped (pass --import; it writes a ground truth)')
-  }
   console.log('\nsmoke: ok')
 } catch (e) {
   if (e instanceof LunastakApiError) console.error(`\nsmoke: FAILED ${e.status} ${e.code}: ${e.message}`, e.details ?? '')
