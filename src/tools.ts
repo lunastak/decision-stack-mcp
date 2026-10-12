@@ -19,7 +19,7 @@ export function explain(e: unknown): string {
   if (e.code === 'conflict') {
     const stale = (e.details as { stale?: unknown } | undefined)?.stale
     const which = stale === undefined ? '' : ` (stale: ${JSON.stringify(stale)})`
-    return `${e.message}${which}. Call get_stack, then redo the edit against the fresh version.`
+    return `The stack changed since you read it${which}. Call get_stack, then redo the edit against the fresh version.`
   }
   if (e.code === 'unauthorized') {
     return 'Lunastak rejected the API key. Check LUNASTAK_API_KEY (mint one with `npm run api-key -- mint` in the app repo).'
