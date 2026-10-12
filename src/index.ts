@@ -1,43 +1,22 @@
 #!/usr/bin/env node
+/**
+ * stdio MCP server over Lunastak's /api/v1. stdout is the protocol: log to stderr only.
+ */
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { createClient } from './client.js'
+import { loadConfig, VERSION } from './config.js'
+import { registerTools } from './tools.js'
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
-import { INSTRUCTIONS } from "./instructions.js";
+let config
+try {
+  config = loadConfig()
+} catch (e) {
+  console.error(`lunastak MCP: ${(e as Error).message}`)
+  process.exit(1)
+}
 
-const server = new McpServer({
-  name: "decision-stack",
-  version: "1.0.2",
-});
-
-server.tool(
-  "decision-stack",
-  "Build your Decision Stack — organise strategic thinking into Vision, Strategy, Objectives, Principles, and Opportunities. Returns the full Decision Stack skill instructions for Claude to follow.",
-  {
-    mode: z
-      .enum(["context_dump", "exploration", "deep_dive", "gap_analysis"])
-      .optional()
-      .describe(
-        "Starting mode: context_dump, exploration, deep_dive, or gap_analysis"
-      ),
-  },
-  ({ mode }) => {
-    let content = INSTRUCTIONS;
-    if (mode) {
-      const modeNames: Record<string, string> = {
-        context_dump: "Context dump",
-        exploration: "Strategic exploration",
-        deep_dive: "Focused deep-dive",
-        gap_analysis: "Gap analysis",
-      };
-      const modeName = modeNames[mode] || mode;
-      content += `\n\n---\n\nThe user has selected **${modeName}** mode. Start there directly — don't ask them to choose a mode.`;
-    }
-    return {
-      content: [{ type: "text", text: content }],
-    };
-  }
-);
-
-const transport = new StdioServerTransport();
-await server.connect(transport);
+const server = new McpServer({ name: 'lunastak', version: VERSION })
+registerTools(server, createClient(config), { version: VERSION })
+await server.connect(new StdioServerTransport())
+console.error(`lunastak MCP ${VERSION} → ${config.baseUrl}`)
