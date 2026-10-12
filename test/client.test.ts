@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { createClient, LunastakApiError } from '../src/client.js'
 
 function fakeFetch(status: number, body: unknown, { json = true } = {}) {
-  return vi.fn(async (_url: string, _init?: RequestInit) =>
+  return vi.fn(async (_url: string | URL | Request, _init?: RequestInit) =>
     new Response(json ? JSON.stringify(body) : String(body), { status }),
   )
 }
@@ -57,18 +57,18 @@ describe('createClient', () => {
     })
     const client = createClient({ baseUrl: 'https://x', apiKey: 'k', fetchImpl })
 
-    const err = await client.editStack('p1', {}).catch(e => e)
+    const err = await client.editStack('p1', {}).catch((e: LunastakApiError) => e)
 
     expect(err).toBeInstanceOf(LunastakApiError)
     expect(err).toMatchObject({ status: 409, code: 'conflict', details: { stale: ['obj-1'] } })
-    expect(err.message).toBe('The stack changed since it was read')
+    expect((err as LunastakApiError).message).toBe('The stack changed since it was read')
   })
 
   it('throws code internal on a non-JSON error', async () => {
     const fetchImpl = fakeFetch(502, '<html>Bad Gateway</html>', { json: false })
     const client = createClient({ baseUrl: 'https://x', apiKey: 'k', fetchImpl })
 
-    const err = await client.listProjects().catch(e => e)
+    const err = await client.listProjects().catch((e: LunastakApiError) => e)
 
     expect(err).toBeInstanceOf(LunastakApiError)
     expect(err).toMatchObject({ status: 502, code: 'internal', message: 'HTTP 502' })
