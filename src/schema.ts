@@ -42,6 +42,19 @@ const NEW_CARD = {
   principle: CARD_FIELDS.principle.partial().required({ priority: true, deprioritized: true }),
 }
 
+/**
+ * A patch may set any field, and may clear the optional text ones with `null` (HUM-144,
+ * 2026-11-11; copied from the app's `PATCH`). The fields a card needs on add can't be cleared,
+ * and neither can lists (send `[]`) or `status`.
+ */
+const PATCH = {
+  objective: CARD_FIELDS.objective.partial().extend({
+    explanation: long.nullable().optional(), omtm: short.nullable().optional(), aspiration: short.nullable().optional(),
+  }),
+  opportunity: CARD_FIELDS.opportunity.partial(),
+  principle: CARD_FIELDS.principle.partial().extend({ context: long.nullable().optional() }),
+}
+
 const expected = z.string().datetime().optional()
 
 // A generic helper: `.refine` isn't callable on the per-type union that CARD_FIELDS[type] gives
@@ -50,7 +63,7 @@ const nonEmpty = <S extends z.ZodTypeAny>(s: S) => s.refine(f => Object.keys(f a
 
 const perType = <T extends CardType>(type: T) => [
   z.object({ op: z.literal('add_card'), type: z.literal(type), content: NEW_CARD[type] }).strict(),
-  z.object({ op: z.literal('update_card'), type: z.literal(type), componentId, fields: nonEmpty(CARD_FIELDS[type].partial()), expectedUpdatedAt: expected }).strict(),
+  z.object({ op: z.literal('update_card'), type: z.literal(type), componentId, fields: nonEmpty(PATCH[type]), expectedUpdatedAt: expected }).strict(),
 ] as const
 
 export const Operation = z.union([
