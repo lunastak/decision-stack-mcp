@@ -50,7 +50,7 @@ Rules:
 Operations (applied in order, 1–50 per call):
 - set_statement: { field: "vision" | "strategy", text?, elaboration? } — at least one of text/elaboration; elaboration null clears it.
 - add_card: { type, content } — appends; the componentId is minted by Lunastak. Use reorder to place it.
-- update_card: { type, componentId, fields } — fields are merged into the card; supply only what changes.
+- update_card: { type, componentId, fields } — fields are merged into the card; supply only what changes. null clears an optional text field: an objective's explanation, omtm or aspiration, a principle's context.
 - archive_card: { type, componentId } — archiving an objective also unlinks it from every opportunity.
 - reorder: { type, componentIds } — must list exactly the active cards of that type, in the new order.
 

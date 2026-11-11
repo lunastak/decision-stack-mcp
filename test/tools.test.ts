@@ -64,6 +64,25 @@ describe('tools', () => {
     expect(api.editStack).not.toHaveBeenCalled()
   })
 
+  it('edit_stack passes null through to clear an optional text field (HUM-144)', async () => {
+    const operations = [
+      { op: 'update_card', type: 'objective', componentId: 'obj-1', fields: { aspiration: null, omtm: null } },
+      { op: 'update_card', type: 'principle', componentId: 'prin-1', fields: { context: null } },
+    ]
+    const r = await mcp.callTool({ name: 'edit_stack', arguments: { projectId: 'p1', summary: 'Cleared', operations } })
+    expect(r.isError).toBeFalsy()
+    expect(api.editStack).toHaveBeenCalledWith('p1', { summary: 'Cleared', operations })
+  })
+
+  it('edit_stack refuses null for a field a card cannot do without', async () => {
+    const r = await mcp.callTool({
+      name: 'edit_stack',
+      arguments: { projectId: 'p1', summary: 's', operations: [{ op: 'update_card', type: 'objective', componentId: 'obj-1', fields: { title: null } }] },
+    })
+    expect(r.isError).toBe(true)
+    expect(api.editStack).not.toHaveBeenCalled()
+  })
+
   it('a conflict becomes isError with the get_stack hint', async () => {
     api.editStack.mockRejectedValueOnce(new LunastakApiError(409, 'conflict', 'The stack changed since it was read', { stale: ['obj-1'] }))
     const r = await mcp.callTool({
